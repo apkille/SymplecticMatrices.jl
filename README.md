@@ -66,6 +66,8 @@ In the last line of code, the symplectic check failed because we defined `s` wit
 
 To compute the symplectic polar decomposition of `S`, which produces a product of an orthosymplectic matrix `O` and positive-definite symmetric symplectic matrix `P`, call `polar`:
 
+### Polar Decomposition
+
 ```julia
 julia> F = polar(S)
 Polar{Float64, Symplectic{BlockForm{Int64}, Float64, Matrix{Float64}}, Symplectic{BlockForm{Int64}, Float64, Matrix{Float64}}}
@@ -85,6 +87,8 @@ P factor:
 julia> isapprox(F.O * F.P, S, atol = 1e-10)
 true
 ```
+
+### Williamson Decomposition
 
 To compute the Williamson decomposition of a positive definite matrix `V`, which finds a congruence relation between a symplectic matrix `S` and a diagonal matrix containing the symplectic eigenvalues `spectrum`, call `williamson`:
 
@@ -112,6 +116,8 @@ symplectic spectrum:
 julia> isapprox(F.S * V * F.S', Diagonal(repeat(F.spectrum, 2)), atol = 1e-10)
 true
 ```
+
+### Bloch-Messiah Decomposition
 
 To compute the Bloch-Messiah/Euler decomposition of a symplectic matrix `S`, which finds the product of an orthosymplectic matrix followed by a diagonal matrix followed by another orthosymplectic matrix, call `blochmessiah`:
 
