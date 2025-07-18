@@ -2,3 +2,9 @@ name = "SymplecticMatrices"
 uuid = "d07eab47-f98b-4620-8fe1-ee63e153d4ef"
 authors = ["apkille"]
 version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[compat]
+LinearAlgebra = "1.11.0"
