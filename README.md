@@ -1,10 +1,14 @@
 # SymplecticMatrices
 
 [![Build status (Github Actions)](https://github.com/apkille/SymplecticMatrices.jl/workflows/CI/badge.svg)](https://github.com/apkille/SymplecticMatrices.jl/actions)
-[![codecov](https://codecov.io/github/apkille/SymplecticMatrices.jl/graph/badge.svg?token=JWMOD4FY6P)](https://codecov.io/github/apkille/SymplecticMatrices.jl)
+![codecov](https://codecov.io/github/apkille/SymplecticMatrices.jl/graph/badge.svg?token=JWMOD4FY6P)
+[![JET static analysis](https://img.shields.io/badge/%F0%9F%9B%A9%EF%B8%8F_tested_with-JET.jl-233f9a)](https://github.com/aviatesk/JET.jl)
+[![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 SymplecticMatrices is a Julia package for performing optimized linear algebra computations and special decompositions of symplectic matrices. A symplectic matrix `S` is a `2n x 2n` matrix
 that satisfies the condition `SJSᵀ = J`, where `J` is a `2n x 2n` invertible, skew-symmetric matrix called the symplectic form.
+
+The full API can be found at the documentation page: [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://apkille.github.io/SymplecticMatrices.jl/)
 
 ## Usage
 
