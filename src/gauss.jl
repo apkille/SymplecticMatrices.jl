@@ -31,6 +31,13 @@ struct SymplecticGauss{F<:SymplecticForm,N<:Int,T} <: AbstractMatrix{T}
 end
 SymplecticGauss(x::SymplecticGauss) = x
 
+"""
+    gauss(form::SymplecticForm, k::Int, c::Number, d::Number) -> SymplecticGauss
+
+Compute a symplectic Gauss transformation of mode `k` and return a `SymplecticGauss` object.
+
+The parameters `c` and `d` define the scaling and shear of the transformation.
+"""
 function gauss(form::SymplecticForm, k::Int, c::T, d::T) where {T}
     2 <= k <= form.n || throw(ArgumentError("k must be between 2 and n."))
     return SymplecticGauss(form, k, c, d)

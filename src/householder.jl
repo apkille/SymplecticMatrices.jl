@@ -30,6 +30,15 @@ struct SymplecticHouseholder{F<:SymplecticForm,N<:Int,T} <: AbstractMatrix{T}
 end
 SymplecticHouseholder(x::SymplecticHouseholder) = x
 
+"""
+    householder(form::SymplecticForm, k::Int, v::AbstractVector) -> SymplecticHouseholder
+
+Compute a symplectic Householder transformation of mode `k` and return a `SymplecticHouseholder` object.
+
+The transformation uses a Householder reflector `P = I - 2vvᵀ / vᵀv` to act simultaneously on 
+the leading and trailing blocks of the symplectic basis. Starting from index `k`, it reflects 
+the corresponding sub-vectors in both halves of the space.
+"""
 function householder(form::SymplecticForm, k::Int, v::V) where {V}
     k < form.n || throw(ArgumentError("k must be less than n."))
     length(v) == (form.n - k + 1) || throw(ArgumentError("the length of v must be equal to n - k + 1"))
