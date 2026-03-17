@@ -66,6 +66,8 @@ false
 ```
 In the last line of code, the symplectic check failed because we defined `s` with respect to `BlockForm` rather than `PairForm`.
 
+Other symplectic matrix types include `SymplecticHouseholder` and `SymplecticGivens`.
+
 ## Symplectic decompositions
 
 To compute the symplectic polar decomposition of `S`, which produces a product of an orthosymplectic matrix `O` and positive-definite symmetric symplectic matrix `P`, call `polar`:

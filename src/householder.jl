@@ -1,3 +1,32 @@
+"""
+    SymplecticHouseholder <: AbstractMatrix
+
+Matrix representation type of a symplectic Householder reflection on a symplectic basis.
+This is the return type of [`householder(_)`](@ref), the corresponding reflection matrix function.
+
+If `H::SymplecticHouseholder` is the reflection object, the mode `k` and projection matrix `P` can be obtained
+via `H.k` and `H.P`.
+
+# Examples
+```jldoctest
+julia> H = householder(BlockForm(3), 2, rand(2))
+6×6 SymplecticHouseholder{BlockForm{Int64}, Int64, Matrix{Float64}}:
+ 1.0    ⋅          ⋅         ⋅     ⋅          ⋅ 
+  ⋅    0.790733  -0.612162   ⋅     ⋅          ⋅ 
+  ⋅   -0.612162  -0.790733   ⋅     ⋅          ⋅ 
+  ⋅     ⋅          ⋅        1.0    ⋅          ⋅ 
+  ⋅     ⋅          ⋅         ⋅    0.790733  -0.612162
+  ⋅     ⋅          ⋅         ⋅   -0.612162  -0.790733
+
+julia> isapprox(H * H, I)
+true
+
+julia> k, P = H.k, H.P;
+
+julia> k == H.k && P == H.P
+true
+```
+"""
 struct SymplecticHouseholder{F<:SymplecticForm,N<:Int,T} <: AbstractMatrix{T}
     form::F
     k::N

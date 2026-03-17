@@ -1,3 +1,29 @@
+"""
+    SymplecticGivens <: AbstractMatrix
+
+Matrix representation type of a symplectic Givens rotation on a symplectic basis.
+This is the return type of [`givens(_)`](@ref), the corresponding rotation matrix function.
+
+If `G::SymplecticGivens` is the rotation object, the mode `k`, cosine `c`, and sine `s` can be obtained
+via `G.k`, `G.c`, and `G.s`, such that `c^2 + s^2 = 1`.
+
+# Examples
+```jldoctest
+julia> G = givens(BlockForm(3), 2, pi/4)
+SymplecticGivens{BlockForm{Int64}, Int64, Float64}:
+ 1.0    ⋅                   ⋅    ⋅    ⋅                   ⋅ 
+  ⋅    0.7071067811865476   ⋅    ⋅   0.7071067811865475   ⋅ 
+  ⋅     ⋅                  1.0   ⋅    ⋅                   ⋅ 
+  ⋅     ⋅                   ⋅   1.0   ⋅                   ⋅ 
+  ⋅   -0.7071067811865475   ⋅    ⋅   0.7071067811865476   ⋅ 
+  ⋅     ⋅                   ⋅    ⋅    ⋅                  1.0
+
+julia> k, c, s = G.k, G.c, G.s;
+
+julia> c^2 + s^2 ≈ 1.0
+true
+```
+"""
 struct SymplecticGivens{F<:SymplecticForm,N<:Int,T} <: AbstractRotation{T}
     form::F
     k::N
@@ -260,4 +286,22 @@ function Base.replace_in_print_matrix(x::SymplecticGivens{F,N,T}, i::Integer, j:
     in_active_block = (i == 2k - 1 || i == 2k) && (j == 2k - 1 || j == 2k)
     is_diag = (i == j)
     return (in_active_block || is_diag) ? s : Base.replace_with_centered_mark(s)
+end
+# NOTE: this is an extremely hacky way to do the fancy sparse printing,
+# but I'm not entirely sure how else to access the sparse printing infrastructure
+# for the `SymplecticGivens type`, as it subtypes `AbstractRotation` and not
+# `AbstractMatrix`. 
+# TODO: find a better way to do the sparse printing without allocating.
+struct SymplecticPrintWrapper{T, S} <: AbstractMatrix{T}
+    parent::S
+end
+SymplecticPrintWrapper(x) = SymplecticPrintWrapper{eltype(x), typeof(x)}(x)
+Base.size(w::SymplecticPrintWrapper) = size(w.parent)
+Base.getindex(w::SymplecticPrintWrapper, i::Int, j::Int) = w.parent[i, j]
+Base.replace_in_print_matrix(w::SymplecticPrintWrapper, i::Integer, j::Integer, s::AbstractString) = 
+    Base.replace_in_print_matrix(w.parent, i, j, s)
+function Base.show(io::IO, ::MIME"text/plain", x::SymplecticGivens)
+    summary(io, x)
+    println(io, ":")
+    Base.print_matrix(io, SymplecticPrintWrapper(x))
 end
