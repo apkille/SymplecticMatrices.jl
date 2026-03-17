@@ -26,6 +26,8 @@ include("symplectic.jl")
 
 include("givens.jl")
 
+include("householder.jl")
+
 include("polar.jl")
 
 include("takagi.jl")
