@@ -1,4 +1,4 @@
-struct SymplecticHouseholder{F<:SymplecticForm,N<:Int,T}
+struct SymplecticHouseholder{F<:SymplecticForm,N<:Int,T} <: AbstractMatrix{T}
     form::F
     k::N
     P::T
@@ -17,8 +17,8 @@ end
 function Base.Matrix(x::SymplecticHouseholder{F,N,T}) where {F<:BlockForm,N<:Int,T}
     n, k, P = (x.form).n, x.k, x.P
     M = Matrix{eltype(P)}(I, 2n, 2n)
-    copyto!(@view(M[k:n,k:n]), P)
-    copyto!(@view(M[n+k:2n,n+k:2n]), P)
+    Base.copyto!(@view(M[k:n,k:n]), P)
+    Base.copyto!(@view(M[n+k:2n,n+k:2n]), P)
     return M
 end
 function Base.Matrix(x::SymplecticHouseholder{F,N,T}) where {F<:PairForm,N<:Int,T}
@@ -36,8 +36,8 @@ Base.Array(x::SymplecticHouseholder) = Matrix(x)
 function Base.AbstractMatrix{T1}(x::SymplecticHouseholder{F,N,T2}) where {F<:BlockForm,N<:Int,T1,T2}
     n, k, P = (x.form).n, x.k, x.P
     M = Matrix{eltype(T1)}(I, 2n, 2n)
-    copyto!(@view(M[k:n,k:n]), P)
-    copyto!(@view(M[n+k:2n,n+k:2n]), P)
+    Base.copyto!(@view(M[k:n,k:n]), P)
+    Base.copyto!(@view(M[n+k:2n,n+k:2n]), P)
     return M
 end
 function Base.AbstractMatrix{T1}(x::SymplecticHouseholder{F,N,T2}) where {F<:PairForm,N<:Int,T1,T2}
@@ -65,24 +65,21 @@ Base.eltype(x::SymplecticHouseholder) = eltype(x.P)
 Base.@propagate_inbounds function Base.getindex(x::SymplecticHouseholder{F,N,T}, i::Int, j::Int) where {F<:BlockForm,N<:Int,T}
     @boundscheck checkbounds(x, i, j)
     n, k, P = (x.form).n, x.k, x.P
-    if i < k || n < i < n+k
-        if i == j
-            return oneunit(eltype(P))
+    if i <= n && j <= n
+        if i < k || j < k
+            return i == j ? oneunit(eltype(P)) : zero(eltype(P))
         else
-            return zero(eltype(P))
+            return P[i - k + 1, j - k + 1]
         end
-    elseif (k <= i && k <= j) || (n+k <= i && n+k <= j)
-        return P[mod1(i, n)-k+1, mod1(j, n)-k+1]
-    else 
+    elseif i > n && j > n
+        if i < n + k || j < n + k
+            return i == j ? oneunit(eltype(P)) : zero(eltype(P))
+        else
+            return P[i - n - k + 1, j - n - k + 1]
+        end
+    else
         return zero(eltype(P))
     end
-end
-Base.@propagate_inbounds function Base.getindex(x::SymplecticHouseholder{F,N,T}, i::Int) where {F<:BlockForm,N<:Int,T}
-    @boundscheck checkbounds(x, i)
-    n = (x.form).n
-    row = ((i-1) % 2n) + 1
-    col = ((i-1) ÷ 2n) + 1
-    return getindex(x, row, col)
 end
 Base.@propagate_inbounds function Base.getindex(x::SymplecticHouseholder{F,N,T}, i::Int, j::Int) where {F<:PairForm,N<:Int,T}
     @boundscheck checkbounds(x, i, j)
@@ -103,12 +100,11 @@ Base.@propagate_inbounds function Base.getindex(x::SymplecticHouseholder{F,N,T},
         return zero(eltype(P))
     end
 end
-Base.@propagate_inbounds function Base.getindex(x::SymplecticHouseholder{F,N,T}, i::Int) where {F<:PairForm,N<:Int,T}
-    @boundscheck checkbounds(x, i)
-    n = (x.form).n
-    row = ((i-1) % 2n) + 1
-    col = ((i-1) / 2n) + 1
-    return getindex(x, row, col)
+Base.@propagate_inbounds function Base.getindex(x::SymplecticHouseholder, ind::Int)
+    @boundscheck checkbounds(x, ind)
+    n2 = 2 * x.form.n
+    c, r = divrem(ind - 1, n2)
+    return x[r + 1, c + 1]
 end
 
 LinearAlgebra.adjoint(x::SymplecticHouseholder) = x
@@ -123,8 +119,21 @@ Base.copy(x::SymplecticHouseholder) = SymplecticHouseholder(x.form, copy(x.k), c
     @inbounds for i in axes(dest, 1)
         dest[i, i] = oneunit(eltype(P))
     end
-    copyto!(@view(dest[k:n, k:n]), P)
-    copyto!(@view(dest[n+k:2n, n+k:2n]), P)
+    Base.copyto!(@view(dest[k:n, k:n]), P)
+    Base.copyto!(@view(dest[n+k:2n, n+k:2n]), P)
+    return dest
+end
+@inline function Base.copyto!(dest::Symplectic, src::SymplecticHouseholder{F,N,T}) where {F<:BlockForm,N<:Int,T}
+    LinearAlgebra.require_one_based_indexing(dest)
+    @assert dest.form == src.form
+    size(dest, 1) == size(dest, 2) || throw(ArgumentError("cannot copy a SymplecticHouseholder object to a non-square matrix."))
+    n, k, P = (src.form).n, src.k, src.P
+    fill!(dest, zero(eltype(P)))
+    @inbounds for i in axes(dest, 1)
+        dest[i, i] = oneunit(eltype(P))
+    end
+    Base.copyto!(@view(dest[k:n, k:n]), P)
+    Base.copyto!(@view(dest[n+k:2n, n+k:2n]), P)
     return dest
 end
 @inline function Base.copyto!(dest::AbstractMatrix, src::SymplecticHouseholder{F,N,T}) where {F<:PairForm,N<:Int,T}
@@ -143,18 +152,39 @@ end
     end
     return dest
 end
-
-@inline function LinearAlgebra.lmul!(x::SymplecticHouseholder{F,N,T}, y::AbstractMatrix) where {F<:BlockForm,N<:Int,T}
-    LinearAlgebra.require_one_based_indexing(y)
-    size(y, 1) == size(y, 2) || throw(ArgumentError("cannot compute the matrix product between a SymplecticHouseholder object and a non-square matrix."))
-    n, k, P = x.form.n, x.k, x.P
-    @views begin
-        ytop = view(y, k:n, :)
-        ybot = view(y, n+k:2n, :)
-        mul!(ytop, P, ytop)
-        mul!(ybot, P, ybot)
+@inline function Base.copyto!(dest::Symplectic, src::SymplecticHouseholder{F,N,T}) where {F<:PairForm,N<:Int,T}
+    LinearAlgebra.require_one_based_indexing(dest)
+    @assert dest.form == src.form
+    size(dest, 1) == size(dest, 2) || throw(ArgumentError("cannot copy a SymplecticHouseholder object to a non-square matrix."))
+    n, k, P = (src.form).n, src.k, src.P
+    fill!(dest, zero(eltype(P)))
+    @inbounds for i in axes(dest, 1)
+        dest[i, i] = oneunit(eltype(P))
     end
-    return y
+    @inbounds for i in Base.OneTo(n-k+1)
+        @inbounds for j in Base.OneTo(n-k+1)
+            dest[2(i+k)-3, 2(j+k)-3] = P[i,j]
+            dest[2(i+k)-2, 2(j+k)-2] = P[i,j]
+        end
+    end
+    return dest
+end
+
+@inline function LinearAlgebra.lmul!(H::SymplecticHouseholder{F,N,T}, A::AbstractMatrix) where {F<:BlockForm,N<:Int,T}
+    n, k, P = H.form.n, H.k, H.P
+    m = n - k + 1
+    temp = Vector{eltype(A)}(undef, m)
+    @inbounds for j in axes(A, 2)
+        @inbounds for i in 1:m
+            temp[i] = A[k + i - 1, j]
+        end
+        mul!(view(A, k:n, j), P, temp)
+        @inbounds for i in 1:m
+            temp[i] = A[n + k + i - 1, j]
+        end
+        mul!(view(A, n+k:2n, j), P, temp)
+    end
+    return A
 end
 @inline function LinearAlgebra.lmul!(x::SymplecticHouseholder{F,N,T}, y::AbstractVector) where {F<:BlockForm,N<:Int,T}
     LinearAlgebra.require_one_based_indexing(y)
@@ -167,17 +197,22 @@ end
     end
     return y
 end
-@inline function LinearAlgebra.rmul!(x::AbstractMatrix, y::SymplecticHouseholder{F,N,T}) where {F<:BlockForm,N<:Int,T}
-    LinearAlgebra.require_one_based_indexing(x)
-    size(y, 1) == size(y, 2) || throw(ArgumentError("cannot compute the matrix product between a SymplecticHouseholder object and a non-square matrix."))
-    n, k, P = y.form.n, y.k, y.P
-    @views begin
-        xtop = view(x, :, k:n)
-        xbot = view(x, :, n+k:2n)
-        mul!(xtop, xtop, P)
-        mul!(xbot, xbot, P)
+@inline function LinearAlgebra.rmul!(A::AbstractMatrix, H::SymplecticHouseholder{F,N,T}) where {F<:BlockForm,N<:Int,T}
+    n, k, P = H.form.n, H.k, H.P
+    m = n - k + 1
+    temp = Vector{eltype(A)}(undef, m)
+    @inbounds for i in axes(A, 1)
+        @inbounds for j in 1:m
+            temp[j] = A[i, k + j - 1]
+        end
+        mul!(view(A, i, k:n), P', temp)
+        
+        @inbounds for j in 1:m
+            temp[j] = A[i, n + k + j - 1]
+        end
+        mul!(view(A, i, n+k:2n), P', temp)
     end
-    return x
+    return A
 end
 @inline function LinearAlgebra.lmul!(x::SymplecticHouseholder{F,N,T}, y::AbstractMatrix) where {F<:PairForm,N<:Int,T}
     LinearAlgebra.require_one_based_indexing(y)
