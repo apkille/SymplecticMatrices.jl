@@ -221,7 +221,7 @@ end
     @inbounds for i in Base.OneTo(n-k+1)
         @views yq = y[2(i+k-1)-1, :]
         @views yp = y[2(i+k-1), :]
-        tq, tp = zero(yq), tp = zero(yp)
+        tq, tp = zero(yq), zero(yp)
         @inbounds for j in Base.OneTo(n-k+1)
             @views yjq = y[2(j+k-1)-1, :]
             @views yjp = y[2(j+k-1), :]
