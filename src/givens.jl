@@ -33,6 +33,15 @@ struct SymplecticGivens{F<:SymplecticForm,N<:Int,T} <: AbstractRotation{T}
 end
 SymplecticGivens(x::SymplecticGivens) = x
 
+"""
+    givens(form::SymplecticForm, k::Int, c::Number, s::Number) -> SymplecticGivens
+
+Compute a symplectic Givens rotation of mode `k` and return a `SymplecticGivens` object.
+
+The parameters `c` and `s` represent the cosine and sine of the rotation angle, satisfying `c^2 + s^2 = 1`. 
+The transformation `G` performs a rotation in the `(k, n+k)` plane for `BlockForm` or the `(2k-1, 2k)` plane 
+for `PairForm`.
+"""
 function givens(form::SymplecticForm, k::Int, θ::T) where {T}
     k < form.n || throw(ArgumentError("k must be less than n."))
     c, s = cos(θ), sin(θ)
