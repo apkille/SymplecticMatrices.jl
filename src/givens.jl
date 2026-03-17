@@ -248,3 +248,16 @@ Base.:(\)(x::SymplecticGivens, y::Symplectic) = x.form == y.form ? Symplectic(x.
 Base.:(\)(x::Symplectic, y::SymplecticGivens) = x.form == y.form ? Symplectic(x.form, inv(x.data) * y) : inv(x.data) * y
 Base.:(\)(x::SymplecticGivens, y::AbstractMatrix) = inv(x) * y
 Base.:(\)(x::AbstractMatrix, y::SymplecticGivens) = inv(x) * y
+
+function Base.replace_in_print_matrix(x::SymplecticGivens{F,N,T}, i::Integer, j::Integer, s::AbstractString) where {F<:BlockForm,N<:Int,T}
+    n, k = x.form.n, x.k
+    in_active_block = (i == k || i == n + k) && (j == k || j == n + k)
+    is_diag = (i == j)
+    return (in_active_block || is_diag) ? s : Base.replace_with_centered_mark(s)
+end
+function Base.replace_in_print_matrix(x::SymplecticGivens{F,N,T}, i::Integer, j::Integer, s::AbstractString) where {F<:PairForm,N<:Int,T}
+    k = x.k
+    in_active_block = (i == 2k - 1 || i == 2k) && (j == 2k - 1 || j == 2k)
+    is_diag = (i == j)
+    return (in_active_block || is_diag) ? s : Base.replace_with_centered_mark(s)
+end
