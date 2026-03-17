@@ -214,24 +214,29 @@ end
     end
     return A
 end
-@inline function LinearAlgebra.lmul!(x::SymplecticHouseholder{F,N,T}, y::AbstractMatrix) where {F<:PairForm,N<:Int,T}
-    LinearAlgebra.require_one_based_indexing(y)
-    size(y, 1) == size(y, 2) || throw(ArgumentError("cannot compute the matrix product between a SymplecticHouseholder object and a non-square matrix."))
-    n, k, P = x.form.n, x.k, x.P
-    @inbounds for i in Base.OneTo(n-k+1)
-        @views yq = y[2(i+k-1)-1, :]
-        @views yp = y[2(i+k-1), :]
-        tq, tp = zero(yq), zero(yp)
-        @inbounds for j in Base.OneTo(n-k+1)
-            @views yjq = y[2(j+k-1)-1, :]
-            @views yjp = y[2(j+k-1), :]
-            tq .+= P[i,j] .* yjq
-            tp .+= P[i,j] .* yjp
+@inline function LinearAlgebra.lmul!(H::SymplecticHouseholder{F,N,T}, Y::AbstractMatrix) where {F<:PairForm,N<:Int,T}
+    LinearAlgebra.require_one_based_indexing(Y)
+    size(Y, 1) == size(Y, 2) || throw(ArgumentError("cannot compute the matrix product between a SymplecticHouseholder object and a non-square matrix."))
+    n, k, P = H.form.n, H.k, H.P
+    m = n - k + 1
+    tempq = Vector{eltype(Y)}(undef, m)
+    tempp = Vector{eltype(Y)}(undef, m)
+    @inbounds for col in axes(Y, 2)
+        @inbounds for j in 1:m
+            tempq[j] = Y[2(j+k-1)-1, col]
+            tempp[j] = Y[2(j+k-1), col]
         end
-        yq .= tq
-        yp .= tp
+        @inbounds for i in 1:m
+            tq, tp = zero(eltype(Y)), zero(eltype(Y))
+            @inbounds for j in 1:m
+                tq += P[i,j] * tempq[j]
+                tp += P[i,j] * tempp[j]
+            end
+            Y[2(i+k-1)-1, col] = tq
+            Y[2(i+k-1), col] = tp
+        end
     end
-    return y
+    return Y
 end
 @inline function LinearAlgebra.lmul!(x::SymplecticHouseholder{F,N,T}, y::AbstractVector) where {F<:PairForm,N<:Int,T}
     LinearAlgebra.require_one_based_indexing(y)
@@ -247,24 +252,29 @@ end
     end
     return y
 end
-@inline function LinearAlgebra.rmul!(x::AbstractMatrix, y::SymplecticHouseholder{F,N,T}) where {F<:PairForm,N<:Int,T}
-    LinearAlgebra.require_one_based_indexing(x)
-    size(x, 1) == size(x, 2) || throw(ArgumentError("cannot compute the matrix product between a SymplecticHouseholder object and a non-square matrix."))
-    n, k, P = y.form.n, y.k, y.P
-    @inbounds for j in Base.OneTo(n - k + 1)
-        @views xq = x[:, 2(j+k-1)-1]
-        @views xp = x[:, 2(j+k-1)]
-        tq, tp = zero(xq), zero(xp)
-        @inbounds for i in Base.OneTo(n-k+1)
-            @views xiq = x[:, 2(i+k-1)-1]
-            @views xip = x[:, 2(i+k-1)]
-            tq .+= xiq .* P[i,j]
-            tp .+= xip .* P[i,j]
+@inline function LinearAlgebra.rmul!(X::AbstractMatrix, H::SymplecticHouseholder{F,N,T}) where {F<:PairForm,N<:Int,T}
+    LinearAlgebra.require_one_based_indexing(X)
+    size(X, 1) == size(X, 2) || throw(ArgumentError("cannot compute the matrix product between a SymplecticHouseholder object and a non-square matrix."))
+    n, k, P = H.form.n, H.k, H.P
+    m = n - k + 1
+    tempq = Vector{eltype(X)}(undef, m)
+    tempp = Vector{eltype(X)}(undef, m)
+    @inbounds for row in axes(X, 1)
+        @inbounds for j in 1:m
+            tempq[j] = X[row, 2(j+k-1)-1]
+            tempp[j] = X[row, 2(j+k-1)]
         end
-        xq .= tq
-        xp .= tp
+        @inbounds for i in 1:m
+            tq, tp = zero(eltype(X)), zero(eltype(X))
+            @inbounds for j in 1:m
+                tq += tempq[j] * P[j,i]
+                tp += tempp[j] * P[j,i]
+            end
+            X[row, 2(i+k-1)-1] = tq
+            X[row, 2(i+k-1)] = tp
+        end
     end
-    return x
+    return X
 end
 Base.:(*)(x::SymplecticHouseholder, y::SymplecticHouseholder) = x.k == y.k ? SymplecticHouseholder(x.form, x.k, x.P * y.P) : Symplectic(x.form, Matrix(x) * Matrix(y))
 Base.:(*)(x::SymplecticHouseholder, y::Symplectic) = x.form == y.form ? Symplectic(x.form, x * y.data) : x * y.data
