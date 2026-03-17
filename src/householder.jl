@@ -20,11 +20,6 @@ julia> H = householder(BlockForm(3), 2, [0.23, 0.45])
 
 julia> isapprox(H * H, I)
 true
-
-julia> k, P = H.k, H.P;
-
-julia> k == H.k && P == H.P
-true
 ```
 """
 struct SymplecticHouseholder{F<:SymplecticForm,N<:Int,T} <: AbstractMatrix{T}

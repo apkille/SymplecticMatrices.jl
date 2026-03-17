@@ -11,6 +11,8 @@ export
     givens, SymplecticGivens,
     # symplectic householder
     householder, SymplecticHouseholder,
+    # symplectic gauss
+    gauss, SymplecticGauss,
     # polar decomposition
     polar, Polar,
     # takagi/autonne decomposition
@@ -27,6 +29,8 @@ include("symplectic.jl")
 include("givens.jl")
 
 include("householder.jl")
+
+include("gauss.jl")
 
 include("polar.jl")
 
