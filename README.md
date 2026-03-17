@@ -66,7 +66,8 @@ false
 ```
 In the last line of code, the symplectic check failed because we defined `s` with respect to `BlockForm` rather than `PairForm`.
 
-Other symplectic matrix types include `SymplecticHouseholder` and `SymplecticGivens`.
+Other symplectic matrix types include `SymplecticHouseholder`, `SymplecticGivens`, and `SymplecticGauss`, which
+can be created with the `householder`, `givens`, and `gauss` functions.
 
 ## Symplectic decompositions
 
