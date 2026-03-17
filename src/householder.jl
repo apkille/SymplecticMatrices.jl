@@ -244,3 +244,25 @@ Base.:(\)(x::SymplecticHouseholder, y::Symplectic) = x.form == y.form ? Symplect
 Base.:(\)(x::Symplectic, y::SymplecticHouseholder) = x.form == y.form ? Symplectic(x.form, inv(x.data) * y) : inv(x.data) * y
 Base.:(\)(x::SymplecticHouseholder, y::AbstractMatrix) = inv(x) * y
 Base.:(\)(x::AbstractMatrix, y::SymplecticHouseholder) = inv(x) * y
+
+function Base.replace_in_print_matrix(x::SymplecticHouseholder{F,N,T}, i::Integer, j::Integer, s::AbstractString) where {F<:BlockForm,N<:Int,T}
+    n, k = x.form.n, x.k
+    in_upper_block = (k <= i <= n) && (k <= j <= n)
+    in_lower_block = (n + k <= i <= 2n) && (n + k <= j <= 2n)
+    is_diag = (i == j)
+    if in_upper_block || in_lower_block || is_diag
+        return s
+    else
+        return Base.replace_with_centered_mark(s)
+    end
+end
+function Base.replace_in_print_matrix(x::SymplecticHouseholder{F,N,T}, i::Integer, j::Integer, s::AbstractString) where {F<:PairForm,N<:Int,T}
+    n, k = x.form.n, x.k
+    in_interleaved_block = (2k - 1 <= i <= 2n) && (2k - 1 <= j <= 2n) && (i % 2 == j % 2)
+    is_diag = (i == j)
+    if in_interleaved_block || is_diag
+        return s
+    else
+        return Base.replace_with_centered_mark(s)
+    end
+end
