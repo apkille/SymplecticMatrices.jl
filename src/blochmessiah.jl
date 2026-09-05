@@ -177,8 +177,8 @@ function _blochmessiah(
         end
     end 
     O′ = O * vecs
-    Q′ = vecs'
-    values′ = resize!(vals, n) 
+    Q′ = copy(vecs')
+    values′ = resize!(vals, n)
     return O′, values′, Q′
 end
 
