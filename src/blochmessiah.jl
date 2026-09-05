@@ -126,7 +126,7 @@ function blochmessiah(
 end
 function _blochmessiah(
     form::BlockForm, 
-    x::AbstractMatrix{T},
+    x::AbstractMatrix{T};
     atol::Real = sqrt(eps(float(T)))
 ) where {T<:Real}
     O, P = polar(x)
@@ -184,7 +184,7 @@ end
 
 function _blochmessiah(
     form::PairForm, 
-    x::AbstractMatrix{T},
+    x::AbstractMatrix{T};
     atol::Real = sqrt(eps(float(T)))
 ) where {T<:Real}
     O, P = polar(x)
