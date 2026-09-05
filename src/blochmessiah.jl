@@ -111,18 +111,22 @@ julia> O == F.O && values == F.values && Q == F.Q
 true
 ```
 """
-function blochmessiah(x::Symplectic{F,T,D}) where {F<:SymplecticForm,T,D<:AbstractMatrix{T}} 
+function blochmessiah(
+    x::Symplectic{F,T,D}; atol::Real = sqrt(eps(float(T)))
+) where {F<:SymplecticForm,T,D<:AbstractMatrix{T}} 
     form = x.form
-    O, values, Q = _blochmessiah(form, x.data)
+    O, values, Q = _blochmessiah(form, x.data; atol)
     return BlochMessiah{T}(Symplectic(form, O), values, Symplectic(form, Q))
 end
-function blochmessiah(form::F, x::AbstractMatrix{T}) where {F<:SymplecticForm,T<:Real}
+function blochmessiah(
+    form::F, x::AbstractMatrix{T}; atol::Real = sqrt(eps(float(T)))
+) where {F<:SymplecticForm,T<:Real}
     O, values, Q = _blochmessiah(form, x)
     return BlochMessiah{T}(O, values, Q)
 end
 function _blochmessiah(
     form::BlockForm, 
-    x::AbstractMatrix{T},
+    x::AbstractMatrix{T};
     atol::Real = sqrt(eps(float(T)))
 ) where {T<:Real}
     O, P = polar(x)
@@ -173,14 +177,14 @@ function _blochmessiah(
         end
     end 
     O′ = O * vecs
-    Q′ = vecs'
-    values′ = resize!(vals, n) 
-    return BlochMessiah{T}(O′, values′, Q′)
+    Q′ = copy(vecs')
+    values′ = resize!(vals, n)
+    return O′, values′, Q′
 end
 
 function _blochmessiah(
     form::PairForm, 
-    x::AbstractMatrix{T},
+    x::AbstractMatrix{T};
     atol::Real = sqrt(eps(float(T)))
 ) where {T<:Real}
     O, P = polar(x)
@@ -239,7 +243,7 @@ function _blochmessiah(
     end
     O′ = O * Q′'
     values′ = resize!(vals, n)
-    return BlochMessiah{T}(O′, values′, Q′)
+    return O′, values′, Q′
 end
 
 function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, F::BlochMessiah{<:Any,<:AbstractArray,<:AbstractVector})
