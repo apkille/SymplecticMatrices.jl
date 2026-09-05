@@ -163,6 +163,40 @@ julia> F.O * D * F.Q # == S
   0.00544102   0.618132  0.493417  -0.35965
 ```
 
+## Pre-Iwasawa Decomposition
+
+To compute the Pre-Iwasawa decomposition (see quant-ph/9509002v3) of a symplectic matrix `S`, call `preiwasawa`:
+
+```julia
+julia> F = preiwasawa(S)
+PreIwasawa{Float64, Symplectic{BlockForm{Int64}, Float64, Matrix{Float64}}}
+L factor:
+4×4 Symplectic{BlockForm{Int64}, Float64, Matrix{Float64}}:
+ 1.0       0.0        0.0  0.0
+ 0.0       1.0        0.0  0.0
+ 0.381476  0.278701   1.0  0.0
+ 0.278701  0.0998344  0.0  1.0
+P factor:
+4×4 Symplectic{BlockForm{Int64}, Float64, Matrix{Float64}}:
+ 1.14469   0.278149   0.0        0.0
+ 0.278149  1.41081    0.0        0.0
+ 0.0       0.0        0.917555  -0.180901
+ 0.0       0.0       -0.180901   0.744478
+Q factor:
+4×4 Symplectic{BlockForm{Int64}, Float64, Matrix{Float64}}:
+ -0.131742  -0.0763153   0.962757   0.223424
+  0.123206  -0.338544    0.201402  -0.910849
+ -0.962757  -0.223424   -0.131742  -0.0763153
+ -0.201402   0.910849    0.123206  -0.338544
+
+julia> F.L * F.P * F.Q # == S
+4×4 Symplectic{BlockForm{Int64}, Float64, Matrix{Float64}}:
+ -0.116535    -0.181523  1.15808    0.00240053
+  0.137176    -0.498848  0.55193   -1.22289
+ -0.853173    -0.578054  0.452435  -0.348686
+  0.00544062   0.618132  0.493416  -0.35965
+```
+
 ## Quick Benchmarks
 
 ### 

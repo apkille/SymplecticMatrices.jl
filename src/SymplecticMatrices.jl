@@ -20,7 +20,9 @@ export
     # williamson decomposition
     williamson, Williamson,
     # bloch-messiah/euler decomposition
-    blochmessiah, BlochMessiah
+    blochmessiah, BlochMessiah,
+    # pre-iwasawa decomposition
+    preiwasawa, PreIwasawa
 
 include("form.jl")
 
@@ -39,5 +41,7 @@ include("takagi.jl")
 include("williamson.jl")
 
 include("blochmessiah.jl")
+
+include("preiwasawa.jl")
 
 end
