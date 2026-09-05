@@ -145,9 +145,9 @@ function _blochmessiah(
                 vecs[r, k], vecs[r, p] = vecs[r, p], vecs[r, k]
             end
         end
-        nrm = sqrt(best)
+        invnrm = inv(sqrt(best))
         for r in Base.OneTo(2n)
-            vecs[r, k] /= nrm
+            vecs[r, k] *= invnrm
         end
         for j in k+1:2n-m
             s, c = zero(T), zero(T)
@@ -162,14 +162,19 @@ function _blochmessiah(
             end
         end
     end
-    @inbounds @views for i in Base.OneTo(n)
-        vecs[1, i] < 0.0 && (vecs[:, i] .*= -1.0)
-        vecs[1:n, i+n] .= .-vecs[n+1:2n, i]
-        vecs[n+1:2n, i+n] .= vecs[1:n, i]
-    end
+    @inbounds for i in Base.OneTo(n)
+        flip = vecs[1, i] < 0.0 ? -one(T) : one(T)
+        for r in Base.OneTo(2n)
+            vecs[r, i] *= flip
+        end
+        for r in Base.OneTo(n)
+            vecs[r, i+n] = -vecs[r+n, i]
+            vecs[r+n, i+n] = vecs[r, i]
+        end
+    end 
     O′ = O * vecs
     Q′ = vecs'
-    values′ = vals[1:n]
+    values′ = resize!(vals, n) 
     return BlochMessiah{T}(O′, values′, Q′)
 end
 
@@ -198,9 +203,9 @@ function _blochmessiah(
                 vecs[r, k], vecs[r, p] = vecs[r, p], vecs[r, k]
             end
         end
-        nrm = sqrt(best)
+        invnrm = inv(sqrt(best))
         for r in Base.OneTo(2n)
-            vecs[r, k] /= nrm
+            vecs[r, k] *= invnrm
         end
         for j in k+1:2n-m
             s, c = zero(T), zero(T)
@@ -216,15 +221,24 @@ function _blochmessiah(
         end
     end
     Q′ = P
-    @inbounds @views for i in Base.OneTo(n)
-        vecs[1, i] < 0.0 && (vecs[:, i] .*= -1.0)
-        vecs[1:2:2n-1, i+n] .= .-vecs[2:2:2n, i]
-        vecs[2:2:2n, i+n] .= vecs[1:2:2n-1, i]
-        Q′[2i-1, :] .= vecs[:, i]
-        Q′[2i, :] .= vecs[:, i+n]
+    @inbounds for i in Base.OneTo(n)
+        flip = vecs[1, i] < 0.0 ? -one(T) : one(T)
+        for r in Base.OneTo(2n)
+            vecs[r, i] *= flip
+        end
+        for r in Base.OneTo(n)
+            vecs[2r-1, i+n] = -vecs[2r, i]
+            vecs[2r, i+n] = vecs[2r-1, i]
+        end
+    end
+    @inbounds for j in Base.OneTo(2n)
+        for i in Base.OneTo(n)
+            Q′[2i-1, j] = vecs[j, i]
+            Q′[2i, j] = vecs[j, i+n]
+        end
     end
     O′ = O * Q′'
-    values′ = vals[1:n]
+    values′ = resize!(vals, n)
     return BlochMessiah{T}(O′, values′, Q′)
 end
 
