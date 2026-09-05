@@ -63,10 +63,12 @@ Base.iterate(F::BlochMessiah, ::Val{:Q}) = (F.Q, Val(:done))
 Base.iterate(F::BlochMessiah, ::Val{:done}) = nothing
 
 """
-    blochmessiah(form::SymplecticForm, S::AbstractMatrix) -> BlochMessiah
-    blochmessiah(S::Symplectic) -> BlochMessiah
+    blochmessiah(form::SymplecticForm, S::AbstractMatrix; atol::Real = sqrt(eps(float(T)))) -> BlochMessiah
+    blochmessiah(S::Symplectic; atol::Real = sqrt(eps(float(T)))) -> BlochMessiah
 
-Compute the Bloch-Messiah/Euler decomposition of a symplectic matrix `S` and return a `BlockMessiah` object.
+Compute the Bloch-Messiah/Euler decomposition of a symplectic matrix `S` and return a `BlochMessiah` object.
+
+The keyword argument `atol` sets the absolute tolerance used to verify the symplectic condition and handle unit eigenvalue degeneracies.
 
 The orthogonal symplectic matrices `O` and `Q` as well as the singular values `values` can be obtained
 via `F.O`, `F.Q`, and `F.values`, respectively.
@@ -118,29 +120,108 @@ function blochmessiah(form::F, x::AbstractMatrix{T}) where {F<:SymplecticForm,T<
     O, values, Q = _blochmessiah(form, x)
     return BlochMessiah{T}(O, values, Q)
 end
-function _blochmessiah(form::BlockForm, x::AbstractMatrix{T}) where {T<:Real}
+function _blochmessiah(
+    form::BlockForm, 
+    x::AbstractMatrix{T},
+    atol::Real = sqrt(eps(float(T)))
+) where {T<:Real}
     O, P = polar(x)
     n = form.n
-    vals, vecs = eigen(Symmetric(P), sortby = x -> isless(1.0, x) ? -1/x : 1/x)
-    @inbounds for i in Base.OneTo(n)
-        vecs[1, i] < 0.0 && (@view(vecs[:, i]) .*= -1.0)
-        vecs[1, i+n] < 0.0 && (@view(vecs[:, i+n]) .*= -1.0)
+    vals, vecs = eigen(Symmetric(P), sortby = -)
+    m = count(>(one(T) + atol), vals)
+    m ≤ n || throw(ArgumentError("x is not symplectic to tolerance $atol"))
+    @inbounds for k in m+1:n
+        p, best = k, zero(T)
+        for j in k:2n-m
+            nj = zero(T)
+            for r in Base.OneTo(2n)
+                nj += vecs[r, j]^2
+            end
+            nj > best && ((p, best) = (j, nj))
+        end
+        best > atol^2 || throw(ArgumentError("unit eigenspace degenerate at tolerance $atol"))
+        if p != k
+            for r in Base.OneTo(2n)
+                vecs[r, k], vecs[r, p] = vecs[r, p], vecs[r, k]
+            end
+        end
+        nrm = sqrt(best)
+        for r in Base.OneTo(2n)
+            vecs[r, k] /= nrm
+        end
+        for j in k+1:2n-m
+            s, c = zero(T), zero(T)
+            for r in Base.OneTo(n)
+                s += vecs[r, k] * vecs[r, j] + vecs[r+n, k] * vecs[r+n, j]
+                c += vecs[r+n, k] * vecs[r, j] - vecs[r, k] * vecs[r+n, j]
+            end
+            for r in Base.OneTo(n)
+                a, b = vecs[r, k], vecs[r+n, k]
+                vecs[r, j] -= s * a + c * b
+                vecs[r+n, j] -= s * b - c * a
+            end
+        end
+    end
+    @inbounds @views for i in Base.OneTo(n)
+        vecs[1, i] < 0.0 && (vecs[:, i] .*= -1.0)
+        vecs[1:n, i+n] .= .-vecs[n+1:2n, i]
+        vecs[n+1:2n, i+n] .= vecs[1:n, i]
     end
     O′ = O * vecs
     Q′ = vecs'
     values′ = vals[1:n]
     return BlochMessiah{T}(O′, values′, Q′)
 end
-function _blochmessiah(form::PairForm, x::AbstractMatrix{T}) where {T<:Real}
+
+function _blochmessiah(
+    form::PairForm, 
+    x::AbstractMatrix{T},
+    atol::Real = sqrt(eps(float(T)))
+) where {T<:Real}
     O, P = polar(x)
     n = form.n
-    vals, vecs = eigen(Symmetric(P), sortby = x -> isless(1.0, x) ? -1/x : 1/x)
+    vals, vecs = eigen(Symmetric(P), sortby = -)
+    m = count(>(one(T) + atol), vals)
+    m ≤ n || throw(ArgumentError("x is not symplectic to tolerance $atol"))
+    @inbounds for k in m+1:n
+        p, best = k, zero(T)
+        for j in k:2n-m
+            nj = zero(T)
+            for r in Base.OneTo(2n)
+                nj += vecs[r, j]^2
+            end
+            nj > best && ((p, best) = (j, nj))
+        end
+        best > atol^2 || throw(ArgumentError("unit eigenspace degenerate at tolerance $atol"))
+        if p != k
+            for r in Base.OneTo(2n)
+                vecs[r, k], vecs[r, p] = vecs[r, p], vecs[r, k]
+            end
+        end
+        nrm = sqrt(best)
+        for r in Base.OneTo(2n)
+            vecs[r, k] /= nrm
+        end
+        for j in k+1:2n-m
+            s, c = zero(T), zero(T)
+            for r in Base.OneTo(n)
+                s += vecs[2r-1, k] * vecs[2r-1, j] + vecs[2r, k] * vecs[2r, j]
+                c += vecs[2r, k] * vecs[2r-1, j] - vecs[2r-1, k] * vecs[2r, j]
+            end
+            for r in Base.OneTo(n)
+                a, b = vecs[2r-1, k], vecs[2r, k]
+                vecs[2r-1, j] -= s * a + c * b
+                vecs[2r, j] -= s * b - c * a
+            end
+        end
+    end
     Q′ = P
-    @inbounds for i in Base.OneTo(n)
-        vecs[1, i] < 0.0 && (@view(vecs[:, i]) .*= -1.0)
-        vecs[1, i+n] < 0.0 && (@view(vecs[:, i+n]) .*= -1.0)
-        Q′[2i-1, :] .= @view(vecs[:, i])
-        Q′[2i, :] .= @view(vecs[:, i+n])
+    @inbounds @views for i in Base.OneTo(n)
+        vecs[1, i] < 0.0 && (vecs[:, i] .*= -1.0)
+        vecs[1:2:2n-1, i+n] .= .-vecs[2:2:2n, i]
+        vecs[2:2:2n, i+n] .= vecs[1:2:2n-1, i]
+        Q′[2i-1, :] .= vecs[:, i]
+        Q′[2i, :] .= vecs[:, i+n]
     end
     O′ = O * Q′'
     values′ = vals[1:n]
