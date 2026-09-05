@@ -1,5 +1,9 @@
 # News
 
+## v0.1.3 - dev
+
+- Add `PreIwasawa` factorization.
+
 ## v0.1.2 - 2026-09-05
 
 - Fix sorting bug in `blochmessiah` (see https://github.com/apkille/SymplecticMatrices.jl/issues/10).
