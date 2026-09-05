@@ -2,7 +2,7 @@ module SymplecticMatrices
 
 import LinearAlgebra
 import LinearAlgebra: givens
-using LinearAlgebra: mul!, Diagonal, qr, qr!, ColumnNorm, Factorization, svd, require_one_based_indexing, Symmetric, eigen, eigen!, I, eigvals, adjoint, eigvecs, normalize!, AbstractRotation
+using LinearAlgebra: mul!, Diagonal, qr, Factorization, svd, require_one_based_indexing, Symmetric, eigen, eigen!, I, eigvals, adjoint, eigvecs, normalize!, AbstractRotation
 
 export 
     # symplectic stuff
