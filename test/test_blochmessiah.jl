@@ -55,4 +55,33 @@
         @test isapprox(O_block * D_block * Q_block, S_block, atol = 1e-5)
         @test isapprox(O_pair * D_pair * Q_pair, S_pair, atol = 1e-5)
     end
+
+    @testset "degenerate eigenvalues" begin
+        z = rand()
+
+        Omega = PairForm(2)
+        S_pair = Diagonal([exp(-z), exp(z), 1.0, 1.0])
+        
+        F_pair = blochmessiah(Omega, S_pair)
+        D_pair = Diagonal(collect(Iterators.flatten(zip(F_pair.values, F_pair.values .^ (-1)))))
+        
+        @test isapprox(F_pair.O * D_pair * F_pair.Q, S_pair, atol = 1e-10)
+        @test issymplectic(Omega, F_pair.O, atol = 1e-10) && issymplectic(Omega, F_pair.Q, atol = 1e-10)
+        @test isapprox(inv(F_pair.O), transpose(F_pair.O), atol = 1e-10)
+        @test isapprox(inv(F_pair.Q), transpose(F_pair.Q), atol = 1e-10)
+
+        J = BlockForm(2)
+        S_block = Diagonal([exp(-z), 1.0, exp(z), 1.0])
+        
+        F_block = blochmessiah(J, S_block)
+        D_block = Diagonal(vcat(F_block.values, F_block.values .^ (-1)))
+        
+        @test isapprox(F_block.O * D_block * F_block.Q, S_block, atol = 1e-10)
+        @test issymplectic(J, F_block.O, atol = 1e-10) && issymplectic(J, F_block.Q, atol = 1e-10)
+        @test isapprox(inv(F_block.O), transpose(F_block.O), atol = 1e-10)
+        @test isapprox(inv(F_block.Q), transpose(F_block.Q), atol = 1e-10)
+        
+        @test isapprox(minimum(F_pair.values), 1.0, atol=1e-10)
+        @test isapprox(minimum(F_block.values), 1.0, atol=1e-10)
+    end
 end

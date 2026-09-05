@@ -1,5 +1,9 @@
 # News
 
+## v0.1.2 - 2026-09-05
+
+- Fix sorting bug in `blochmessiah` (see https://github.com/apkille/SymplecticMatrices.jl/issues/10).
+
 ## v0.1.1 - 2026-03-17
 
 - Add `SymplecticHouseholder` type.
