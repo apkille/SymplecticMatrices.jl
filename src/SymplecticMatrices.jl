@@ -2,7 +2,7 @@ module SymplecticMatrices
 
 import LinearAlgebra
 import LinearAlgebra: givens
-using LinearAlgebra: mul!, Diagonal, qr, Factorization, svd, require_one_based_indexing, Symmetric, eigen, eigen!, I, eigvals, adjoint, eigvecs, normalize!, AbstractRotation
+using LinearAlgebra: mul!, Diagonal, qr, Factorization, svd, require_one_based_indexing, Symmetric, eigen, eigen!, I, eigvals, adjoint, eigvecs, normalize!, AbstractRotation, cholesky, issuccess
 
 export 
     # symplectic stuff
@@ -22,7 +22,9 @@ export
     # bloch-messiah/euler decomposition
     blochmessiah, BlochMessiah,
     # pre-iwasawa decomposition
-    preiwasawa, PreIwasawa
+    preiwasawa, PreIwasawa,
+    # iwasawa decomposition
+    iwasawa, Iwasawa
 
 include("form.jl")
 
@@ -43,5 +45,7 @@ include("williamson.jl")
 include("blochmessiah.jl")
 
 include("preiwasawa.jl")
+
+include("iwasawa.jl")
 
 end

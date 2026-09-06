@@ -158,8 +158,8 @@ function _preiwasawa(form::PairForm, x::AbstractMatrix{T}) where {T<:Real}
     n = form.n
     size(x) == (2n, 2n) || throw(ArgumentError("x must be a 2n × 2n matrix"))
     Co′, Ao, Aoinv, X, Y = _preiwasawa(
-        x[1:2:2n-1, 1:2:2n-1], x[1:2:2n-1, 2:2:2n],
-        x[2:2:2n, 1:2:2n-1], x[2:2:2n, 2:2:2n],
+        @view(x[1:2:2n-1, 1:2:2n-1]), @view(x[1:2:2n-1, 2:2:2n]),
+        @view(x[2:2:2n, 1:2:2n-1]), @view(x[2:2:2n, 2:2:2n]),
     )
     L′ = Matrix{T}(I, 2n, 2n)
     P′ = zeros(T, 2n, 2n)
