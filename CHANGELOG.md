@@ -1,8 +1,8 @@
 # News
 
-## v0.1.3 - dev
+## v0.1.3 - 2026-10-03
 
-- Add `PreIwasawa` factorization.
+- Add `PreIwasawa` and `Iwasawa` factorizations.
 
 ## v0.1.2 - 2026-09-05
 
