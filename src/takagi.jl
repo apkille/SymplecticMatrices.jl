@@ -72,6 +72,25 @@ true
 ```
 """
 function takagi(x::AbstractMatrix{T}) where {T<:Union{Real,Complex}}
+    Q, S = _takagi(x)
+    return Takagi{eltype(Q)}(Q, S)
+end
+function _takagi(x::AbstractMatrix{T}) where {T<:Real}
+    # for real x, the unitary Uᴴ * conj(V) of the complex method is the diagonal matrix of
+    # eigenvalue signs, so its square root is known in closed form and no SVD or Schur form is needed
+    vals, vecs = eigen(Symmetric(x), sortby = λ -> -abs(λ))
+    Q = similar(vecs, complex(eltype(vecs)))
+    @inbounds for j in axes(vecs, 2)
+        neg = vals[j] < zero(eltype(vals))
+        for i in axes(vecs, 1)
+            v = vecs[i,j]
+            Q[i,j] = neg ? complex(zero(v), v) : complex(v)
+        end
+        vals[j] = abs(vals[j])
+    end
+    return Q, vals
+end
+function _takagi(x::AbstractMatrix{T}) where {T<:Complex}
     fact = svd!(Matrix{float(T)}(Symmetric(x)))
     Tt = complex(eltype(fact.U))
 
@@ -108,7 +127,7 @@ function takagi(x::AbstractMatrix{T}) where {T<:Union{Real,Complex}}
     Q = zeros(Tt, size(x))
     mul!(Q, fact.U, sqrt_shifted .* exp.(-im * shift / 2))
 
-    return Takagi{Tt}(Q, fact.S)
+    return Q, fact.S
 end
 function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, F::Takagi{<:Any,<:AbstractArray,<:AbstractVector})
     Base.summary(io, F); println(io)
