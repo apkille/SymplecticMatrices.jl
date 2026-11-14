@@ -163,6 +163,22 @@ julia> F.O * D * F.Q # == S
   0.00544102   0.618132  0.493417  -0.35965
 ```
 
+### Takagi Decomposition
+
+To compute the Takagi decomposition of a complex symmetric matrix `x`, which finds a congruence relation between a unitary matrix `Q` and a diagonal matrix containing the singular values `S`, call `takagi`:
+
+```julia
+julia> x = rand(ComplexF64, 4, 4); x = x + transpose(x);
+
+julia> F = takagi(x);
+
+julia> isapprox(F.Q * Diagonal(F.S) * transpose(F.Q), x, atol = 1e-10)
+true
+
+julia> isapprox(F.Q' * F.Q, I, atol = 1e-10)
+true
+```
+
 ## Pre-Iwasawa Decomposition
 
 To compute the Pre-Iwasawa decomposition (see quant-ph/9509002v3) of a symplectic matrix `S`, call `preiwasawa`:
