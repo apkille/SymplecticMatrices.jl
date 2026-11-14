@@ -92,41 +92,35 @@ function _takagi(x::AbstractMatrix{T}) where {T<:Real}
 end
 function _takagi(x::AbstractMatrix{T}) where {T<:Complex}
     fact = svd!(Matrix{float(T)}(Symmetric(x)))
-    Tt = complex(eltype(fact.U))
-
-    #Custom computation of the square root to avoid jumps from the principal branch
-
-    #Schur decompose of the matrix inside the square root
-    #This matrix is normal, so its T matrix is diagonal
-    sF = schur(conj(transpose(fact.U) * fact.V))  
-    sF_eivals = diag(sF.T)
-
-    #Find the unique angles, mod 2 * pi, of the eigenvalues and sort them
-    sF_angles = angle.(sF_eivals)
-    period = oftype(sF_angles[1], 2 * pi)
-    sF_sorted_angles = sort(unique(mod.(sF_angles, period)))
-
-    #Find the difference between these angles, including the difference between the first and last angle (mod 2 * pi)
-    #Select the largest difference and find the midpoint of the corresponding arc
-    sF_angles_diff = diff(vcat(sF_sorted_angles, sF_sorted_angles[1] + period))
-    indx_max_diff = argmax(sF_angles_diff)
-    mid_point = sF_sorted_angles[indx_max_diff] + 0.5 * sF_angles_diff[indx_max_diff]
-    
-    #Wrap the midpoint around 2 * pi and then shift it by -pi
-    shift = mod(-mid_point, period) - pi
-
-    #Rotate all the eigenvalues so that the midpoint of the largest arc lies at +- pi.
-    #The other angles will be far from the branch cut of the complex square root
-    shifted_sF_eivals = sF_eivals .* exp.(im * shift)
-
-    #Compute the square root of the shifted eigenvalues, reconstruct a shifted square root
-    sqrt_shifted_sF_eivals = sqrt.(shifted_sF_eivals)
-    sqrt_shifted = sF.Z * Diagonal(sqrt_shifted_sF_eivals) * sF.Z'
-
-    #Undo the rotation
-    Q = zeros(Tt, size(x))
-    mul!(Q, fact.U, sqrt_shifted .* exp.(-im * shift / 2))
-
+    U = fact.U
+    # W = Uᴴ * conj(V) is unitary, block diagonal over equal singular values, and symmetric on
+    # every block of nonzero singular value, so that Q = U * sqrt(W) gives x = Q * Diagonal(S) * Qᵀ
+    W = transpose(U) * fact.V
+    conj!(W)
+    # W is normal, so its Schur form is diagonal
+    sF = schur!(W)
+    vals = sF.values
+    n = length(vals)
+    # midpoint of the largest arc of the unit circle that is free of eigenvalues of W
+    θ = sort!(mod2pi.(angle.(vals)))
+    period = 2 * oftype(first(θ), π)
+    gap, mid = zero(period), zero(period)
+    @inbounds for j in Base.OneTo(n)
+        g = (j < n ? θ[j+1] : θ[1] + period) - θ[j]
+        g > gap && ((gap, mid) = (g, θ[j] + g / 2))
+    end
+    # rotating the spectrum by cis(shift) moves this midpoint onto the branch cut of sqrt, so that
+    # numerically degenerate eigenvalues receive the same root and sqrt(W) remains a function of W
+    shift = mod2pi(-mid) - period / 2
+    rot, unrot = cis(shift), cis(-shift / 2)
+    mul!(W, U, sF.Z)
+    @inbounds for j in Base.OneTo(n)
+        r = sqrt(vals[j] * rot) * unrot
+        for i in Base.OneTo(n)
+            W[i,j] *= r
+        end
+    end
+    Q = mul!(U, W, adjoint(sF.Z))
     return Q, fact.S
 end
 function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, F::Takagi{<:Any,<:AbstractArray,<:AbstractVector})
