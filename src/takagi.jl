@@ -1,3 +1,33 @@
+"""
+    Takagi <: Factorization
+
+Matrix factorization type of the Takagi decomposition of a complex symmetric matrix `x`.
+This is the return type of [`takagi(_)`](@ref), the corresponding matrix factorization function.
+
+If `F::Takagi` is the factorization object, then `Q` and `S` can be obtained
+via `F.Q` and `F.S`, such that `x = Q * Diagonal(S) * transpose(Q)`. The factor `Q` is unitary,
+and `S` contains the singular values of `x` in descending order.
+
+Iterating the decomposition produces the components `Q` and `S`, in that order.
+
+# Examples
+```jldoctest
+julia> x = [1.0+2.0im 0.5im; 0.5im 3.0];
+
+julia> F = takagi(x);
+
+julia> isapprox(F.Q * Diagonal(F.S) * transpose(F.Q), x)
+true
+
+julia> isapprox(F.Q' * F.Q, I)
+true
+
+julia> Q, S = F; # destructuring via iteration
+
+julia> Q == F.Q && S == F.S
+true
+```
+"""
 struct Takagi{T,M<:AbstractArray{T},N<:AbstractVector{<:Real}} <: Factorization{T}
     Q::M
     S::N
@@ -13,6 +43,34 @@ Base.iterate(F::Takagi) = (F.Q, Val(:S))
 Base.iterate(F::Takagi, ::Val{:S}) = (F.S, Val(:done))
 Base.iterate(F::Takagi, ::Val{:done}) = nothing
 
+"""
+    takagi(x::AbstractMatrix) -> Takagi
+
+Compute the Takagi decomposition of a complex symmetric matrix `x` and return a `Takagi` object.
+
+The unitary factor `Q` and the singular values `S` can be obtained via `F.Q` and `F.S`,
+such that `x = Q * Diagonal(S) * transpose(Q)`. Only the upper triangle of `x` is referenced.
+
+Iterating the decomposition produces the components `Q` and `S`, in that order.
+
+# Examples
+```jldoctest
+julia> x = rand(ComplexF64, 3, 3); x = x + transpose(x);
+
+julia> F = takagi(x);
+
+julia> isapprox(F.Q * Diagonal(F.S) * transpose(F.Q), x)
+true
+
+julia> issorted(F.S, rev = true)
+true
+
+julia> Q, S = F; # destructuring via iteration
+
+julia> Q == F.Q && S == F.S
+true
+```
+"""
 function takagi(x::AbstractMatrix{T}) where {T<:Union{Real,Complex}}
     fact = svd!(Matrix{float(T)}(Symmetric(x)))
     Tt = complex(eltype(fact.U))
