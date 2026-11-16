@@ -1,5 +1,9 @@
 # News
 
+## v0.1.4 - dev
+
+- Add and document support for arbitrary precision.
+
 ## v0.1.3 - 2026-10-03
 
 - Add `PreIwasawa` and `Iwasawa` factorizations.
