@@ -121,7 +121,7 @@ end
 function blochmessiah(
     form::F, x::AbstractMatrix{T}; atol::Real = sqrt(eps(float(T)))
 ) where {F<:SymplecticForm,T<:Real}
-    O, values, Q = _blochmessiah(form, x)
+    O, values, Q = _blochmessiah(form, x; atol)
     return BlochMessiah{T}(O, values, Q)
 end
 function _blochmessiah(
