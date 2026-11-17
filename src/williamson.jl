@@ -108,12 +108,14 @@ function _williamson(form::PairForm, x::AbstractMatrix{T}) where {T<:Real}
     sqrtV = Symmetric(x)^(-1//2)
     X = sqrtV * J * sqrtV
     U = eigvecs(X, sortby = λ -> -abs(λ))
-    G = zeros(ComplexF64, 2*form.n, 2*form.n)
+    # G is built in the working precision of U, so that R does not inherit Float64 rounding
+    s = inv(sqrt(2 * one(real(eltype(U)))))
+    G = zeros(complex(eltype(U)), 2*form.n, 2*form.n)
     @inbounds for i in Base.OneTo(form.n)
-        G[2i-1, 2i-1] = -im/sqrt(2)
-        G[2i-1, 2i] = im/sqrt(2)
-        G[2i, 2i-1] = 1/sqrt(2)
-        G[2i, 2i] = 1/sqrt(2)
+        G[2i-1, 2i-1] = -im * s
+        G[2i-1, 2i] = im * s
+        G[2i, 2i-1] = s
+        G[2i, 2i] = s
     end
     R = real(G * U')
     S = sqrt(D) * R * sqrtV
@@ -126,12 +128,14 @@ function _williamson(form::BlockForm, x::AbstractMatrix{T}) where {T<:Real}
     sqrtV = Symmetric(x)^(-1//2)
     X = sqrtV * J * sqrtV
     U = eigvecs(X, sortby = λ -> (-sign(imag(λ)), -abs(λ)))
-    G = zeros(ComplexF64, 2*form.n, 2*form.n)
+    # G is built in the working precision of U, so that R does not inherit Float64 rounding
+    s = inv(sqrt(2 * one(real(eltype(U)))))
+    G = zeros(complex(eltype(U)), 2*form.n, 2*form.n)
     @inbounds for i in Base.OneTo(form.n)
-        G[i, i] = -im/sqrt(2)
-        G[i, i+form.n] = im/sqrt(2)
-        G[i+form.n, i] = 1/sqrt(2)
-        G[i+form.n, i+form.n] = 1/sqrt(2)
+        G[i, i] = -im * s
+        G[i, i+form.n] = im * s
+        G[i+form.n, i] = s
+        G[i+form.n, i+form.n] = s
     end
     R = real(G * U')
     S = sqrt(D) * R * sqrtV

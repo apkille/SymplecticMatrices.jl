@@ -213,6 +213,24 @@ julia> F.L * F.P * F.Q # == S
   0.00544062   0.618132  0.493416  -0.35965
 ```
 
+## Arbitrary precision
+
+The decompositions support `BigFloat` and the types of MultiFloats.jl. LinearAlgebra provides the required eigenvalue and singular value routines only for BLAS types, so to use extended precision types, load GenericLinearAlgebra.jl to supply them for all other types, and additionally GenericSchur.jl for `williamson` and for `takagi` of a complex matrix:
+
+```julia
+julia> using GenericLinearAlgebra, GenericSchur
+
+julia> V = BigFloat[7 2; 2 1];
+
+julia> F = williamson(BlockForm(1), V);
+
+julia> isapprox(F.S * V * F.S', Diagonal(repeat(F.spectrum, 2)), rtol = 1000 * eps(BigFloat))
+true
+
+julia> isapprox(only(F.spectrum), sqrt(BigFloat(3)), rtol = 1000 * eps(BigFloat))
+true
+```
+
 ## Quick Benchmarks
 
 ### 
