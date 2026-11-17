@@ -1,8 +1,10 @@
 # News
 
-## v0.1.4 - dev
+## v0.1.4 - 2026-11-17
 
 - Add and document support for arbitrary precision.
+- Improve stability of `takagi` with custom square root computation.
+- Document `takagi` in README and docstrings.
 
 ## v0.1.3 - 2026-10-03
 
